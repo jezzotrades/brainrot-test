@@ -1,8 +1,7 @@
--- Delta Immediate GUI
+-- Delta GUI
 local player = game:GetService("Players").LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
--- Create GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "BrainrotHubGUI"
 gui.ResetOnSpawn = false
@@ -42,68 +41,56 @@ autoBtn.Size = UDim2.new(0.9,0,0.2,0)
 autoBtn.Position = UDim2.new(0.05,0,0.5,0)
 autoBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
-autoBtn.Text = "Enable Auto Steal & Teleport"
+autoBtn.Text = "Enable Instant Teleport with Brainrot"
 autoBtn.Font = Enum.Font.Gotham
 autoBtn.TextScaled = true
 autoBtn.Parent = frame
 
--- Logic Variables
+-- Variables
 local enabled = false
-local hasBrainrot = false
 
--- Auto Steal + Teleport
 autoBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
-    autoBtn.Text = enabled and "Disable Auto Steal & Teleport" or "Enable Auto Steal & Teleport"
-    status.Text = enabled and "Status: Auto Steal Enabled" or "Status: Idle"
+    autoBtn.Text = enabled and "Disable Instant Teleport" or "Enable Instant Teleport"
+    status.Text = enabled and "Status: Waiting for Brainrot..." or "Status: Idle"
 end)
 
--- Utility function to find Brainrot anywhere in workspace
-local function findBrainrot()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name:lower():match("brainrot") and obj:IsA("BasePart") then
-            return obj
-        end
-    end
-    return nil
-end
-
--- Utility function to find your Base
-local function findBase()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name:lower():match(player.Name:lower()) and obj:IsA("Model") then
-            return obj
-        end
-    end
-    return nil
-end
-
--- Auto Pickup Loop
+-- Detect if player is holding the Brainrot
 task.spawn(function()
     while task.wait(0.1) do
-        if enabled and not hasBrainrot then
-            local brainrot = findBrainrot()
+        if enabled then
             local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            local backpack = player:FindFirstChild("Backpack") -- optional check if Brainrot goes there
+            local brainrot = workspace:FindFirstChild("Brainrot") -- adjust path if needed
+
+            -- Check if player is carrying Brainrot (this may vary by game implementation)
+            local holding = false
             if brainrot and root then
-                -- Move player close to brainrot
-                root.CFrame = CFrame.new(brainrot.Position + Vector3.new(0,3,0))
-                task.wait(0.05)
-                -- Simulate pickup
-                if game.ReplicatedStorage:FindFirstChild("BrainrotPickup") then
-                    game.ReplicatedStorage.BrainrotPickup:FireServer()
+                if (root.Position - brainrot.Position).Magnitude < 5 then
+                    holding = true
                 end
-                brainrot.Transparency = 1
-                brainrot.CanCollide = false
-                hasBrainrot = true
-                status.Text = "Status: Brainrot Picked Up!"
             end
-        elseif hasBrainrot then
-            local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            local base = findBase()
-            if root and base and base:FindFirstChild("SpawnPoint") then
-                root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0,3,0)
-                status.Text = "Status: Teleported With Brainrot!"
-                hasBrainrot = false -- reset to allow multiple runs
+
+            if holding and root then
+                -- Find player's base
+                local base
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj.Name:lower():match(player.Name:lower()) and obj:IsA("Model") then
+                        base = obj
+                        break
+                    end
+                end
+
+                if base and base:FindFirstChild("SpawnPoint") then
+                    root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0,3,0)
+                    if brainrot then
+                        brainrot.CFrame = root.CFrame + Vector3.new(0,3,0) -- move brainrot with player
+                    end
+                    status.Text = "Status: Brainrot Teleported to Base!"
+                    task.wait(0.5) -- small delay to avoid repeat teleport
+                else
+                    status.Text = "Status: Base not found!"
+                end
             end
         end
     end
