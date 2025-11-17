@@ -1,13 +1,14 @@
--- Delta Immediate GUI
+-- Get LocalPlayer and PlayerGui
 local player = game:GetService("Players").LocalPlayer
-local pg = player:WaitForChild("PlayerGui")
+local pg = player:WaitForChild("PlayerGui") -- wait only for PlayerGui
 
--- Create GUI
+-- Create GUI immediately
 local gui = Instance.new("ScreenGui")
 gui.Name = "BrainrotHubGUI"
 gui.ResetOnSpawn = false
 gui.Parent = pg
 
+-- Frame
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,400,0,250)
 frame.Position = UDim2.new(0.3,0,0.3,0)
@@ -39,7 +40,50 @@ status.Font = Enum.Font.Gotham
 status.TextScaled = true
 status.Parent = frame
 
--- Button
+-- Auto Steal Button
 local autoBtn = Instance.new("TextButton")
 autoBtn.Size = UDim2.new(0.9,0,0.2,0)
-autoBtn.Position =
+autoBtn.Position = UDim2.new(0.05,0,0.5,0)
+autoBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
+autoBtn.Text = "Enable Instant Steal & Teleport"
+autoBtn.Font = Enum.Font.Gotham
+autoBtn.TextScaled = true
+autoBtn.Parent = frame
+
+-- Variables
+local enabled = false
+local hasBrainrot = false
+
+-- Button Toggle
+autoBtn.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    autoBtn.Text = enabled and "Disable Instant Steal & Teleport" or "Enable Instant Steal & Teleport"
+    status.Text = enabled and "Status: Auto Steal Enabled" or "Status: Idle"
+end)
+
+-- Wait a tiny bit before starting brainrot logic
+task.delay(0.1, function()
+    -- Utility: find Brainrot anywhere in workspace
+    local function findBrainrot()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():match("brainrot") and obj:IsA("BasePart") then
+                return obj
+            end
+        end
+        return nil
+    end
+
+    -- Utility: find Base anywhere in workspace
+    local function findBase()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():match(player.Name:lower()) and obj:IsA("Model") then
+                return obj
+            end
+        end
+        return nil
+    end
+
+    -- Auto Steal + Teleport Loop
+    task.spawn(function()
+        while task
