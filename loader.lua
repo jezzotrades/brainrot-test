@@ -1,9 +1,11 @@
 local player = game.Players.LocalPlayer
+
+-- Wait for character and PlayerGui
 player.CharacterAdded:Wait()
 local char = player.Character
 local root = char:WaitForChild("HumanoidRootPart")
 local pg = player:WaitForChild("PlayerGui")
-task.wait(0.3)
+task.wait(0.3) -- ensure GUI can be added safely
 
 -- ScreenGui
 local gui = Instance.new("ScreenGui")
@@ -18,6 +20,8 @@ frame.Position = UDim2.new(0.3, 0, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Parent = gui
+frame.Active = true
+frame.Draggable = true
 
 -- Title
 local title = Instance.new("TextLabel")
@@ -30,7 +34,7 @@ title.TextSize = 24
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Parent = frame
 
--- Buttons and labels
+-- Buttons
 local autoBtn = Instance.new("TextButton")
 autoBtn.Size = UDim2.new(0.45,0,0.2,0)
 autoBtn.Position = UDim2.new(0.05,0,0.2,0)
@@ -63,7 +67,7 @@ teleportWithBtn.Parent = frame
 
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1,0,0.15,0)
-status.Position = UDim2.new(0,0,0.8,0)
+status.Position = UDim2.new(0,0,0.75,0)
 status.BackgroundTransparency = 1
 status.TextColor3 = Color3.fromRGB(0,255,0)
 status.Text = "Status: Idle"
@@ -73,6 +77,7 @@ status.Parent = frame
 
 -- Logic Variables
 local enabled = false
+local hasBrainrot = false
 local targetName = "Brainrot"
 local pickupRange = 10
 local remote = game.ReplicatedStorage:FindFirstChild("BrainrotPickup")
@@ -84,31 +89,29 @@ autoBtn.MouseButton1Click:Connect(function()
     status.Text = enabled and "Status: Auto Pickup Enabled" or "Status: Idle"
 end)
 
--- Teleport Button Logic
+-- Teleport to Base
 tpBtn.MouseButton1Click:Connect(function()
-    local base = workspace:FindFirstChild(player.Name .. "_Base")
+    local base = workspace:FindFirstChild(player.Name.."_Base")
     if base and base:FindFirstChild("SpawnPoint") then
-        root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0, 3, 0)
+        root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0,3,0)
         status.Text = "Status: Teleported to Base"
     else
         status.Text = "Status: Base not found"
     end
 end)
 
--- Teleport With Brainrot Logic
+-- Teleport With Brainrot
 teleportWithBtn.MouseButton1Click:Connect(function()
-    -- Check if player “has” brainrot: this depends on how your server marks it
-    local hasBrainrot = player:GetAttribute("HasBrainrot") -- example
     if hasBrainrot then
-        local base = workspace:FindFirstChild(player.Name .. "_Base")
+        local base = workspace:FindFirstChild(player.Name.."_Base")
         if base and base:FindFirstChild("SpawnPoint") then
-            root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0, 3, 0)
+            root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0,3,0)
             status.Text = "Status: Teleported With Brainrot!"
         else
             status.Text = "Status: Base not found"
         end
     else
-        status.Text = "Status: You don't have a Brainrot!"
+        status.Text = "Status: You don't have the Brainrot!"
     end
 end)
 
@@ -122,12 +125,4 @@ task.spawn(function()
                 if (root.Position - item.Position).Magnitude <= pickupRange then
                     if remote then remote:FireServer() end
                     item.Transparency = 1
-                    item.CanCollide = false
-                    status.Text = "Status: Brainrot Picked Up!"
-                    -- Set an attribute so teleport-with-button knows
-                    player:SetAttribute("HasBrainrot", true)
-                end
-            end
-        end
-    end
-end)
+                    item
