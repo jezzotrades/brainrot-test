@@ -2,6 +2,7 @@
 local player = game:GetService("Players").LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
+-- Create GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "BrainrotHubGUI"
 gui.ResetOnSpawn = false
@@ -52,24 +53,16 @@ local enabled = false
 autoBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
     autoBtn.Text = enabled and "Disable Instant Teleport" or "Enable Instant Teleport"
-    status.Text = enabled and "Status: Waiting for Brainrot..." or "Status: Idle"
+    status.Text = enabled and "Status: Waiting for Brainrot in hand..." or "Status: Idle"
 end)
 
--- Detect if player is holding the Brainrot
+-- Detect if player is holding Brainrot in hand
 task.spawn(function()
     while task.wait(0.1) do
         if enabled then
             local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            local backpack = player:FindFirstChild("Backpack") -- optional check if Brainrot goes there
-            local brainrot = workspace:FindFirstChild("Brainrot") -- adjust path if needed
-
-            -- Check if player is carrying Brainrot (this may vary by game implementation)
-            local holding = false
-            if brainrot and root then
-                if (root.Position - brainrot.Position).Magnitude < 5 then
-                    holding = true
-                end
-            end
+            local brainrot = workspace:FindFirstChild("Brainrot") -- adjust if needed
+            local holding = brainrot and brainrot.Parent == player.Character
 
             if holding and root then
                 -- Find player's base
@@ -82,12 +75,11 @@ task.spawn(function()
                 end
 
                 if base and base:FindFirstChild("SpawnPoint") then
+                    -- Teleport player and Brainrot instantly
                     root.CFrame = base.SpawnPoint.CFrame + Vector3.new(0,3,0)
-                    if brainrot then
-                        brainrot.CFrame = root.CFrame + Vector3.new(0,3,0) -- move brainrot with player
-                    end
+                    brainrot.CFrame = root.CFrame + Vector3.new(0,3,0)
                     status.Text = "Status: Brainrot Teleported to Base!"
-                    task.wait(0.5) -- small delay to avoid repeat teleport
+                    task.wait(0.5) -- prevent repeated teleport
                 else
                     status.Text = "Status: Base not found!"
                 end
